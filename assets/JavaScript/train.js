@@ -1,4 +1,3 @@
-
 // Initialize Firebase
 var config = {
 	apiKey: 'AIzaSyAW17qXQinCY13slNGBJX720ka_ZMH6fEo',
@@ -12,83 +11,81 @@ firebase.initializeApp(config);
 
 var database = firebase.database();
 
-var dataRef = firebase.database();
+// var dataRef = firebase.database();
 
 //BUTTON FOR ADDING A NEW TRAIN
-$("#add-train-btn").on("click", function(event) {
+$('#submit-btn').on('click', function(event) {
 	event.preventDefault();
 
-	//GRAB USER INPUTS ADN PUT THEM INTO VARIABLES
-	var trainName = $("#train-name-input").val().trim();
-	var destination = $("#destination-input").val().trim();
-    var trainTime = $("#first-train-time-input").val().trim();
-    var frequency = $("#frequency-input").val().trim();
-	
-	//TEMP OBJECT TO HOLD NEW TRAIN DATA
-	var newTrain = {
-		newTrainName: trainName,
-		newDestination: destination,
-		newTrainTime: trainTime,
-		newFrequency: frequency,
-		dateAdded: firebase.database.ServerValue.TIMESTAMP
-	};
+	//IF ALL FIELDS DO NOT HAVE INPUTS, SHOW ERROR MESSAGE
+	if (
+		$('#train-name-input').val().trim() === '' ||
+		$('#destination-input').val().trim() === '' ||
+		$('#first-train-time-input').val().trim() === '' ||
+		$('#frequency-input').val().trim() === ''
+	) {
+		alert('Please fill in all details to add new train');
+	} else {
+		//GRAB USER INPUTS ADN PUT THEM INTO VARIABLES
+		var trainName = $('#train-name-input').val().trim();
+		var destination = $('#destination-input').val().trim();
+		var trainTime = $('#first-train-time-input').val().trim();
+		var frequency = $('#frequency-input').val().trim();
 
-	//UPLOAD TRAIN DATA TO DATABASE
-    database.ref().push(newTrain);
-    
-    //ALERTING FOR ADDING A NEW TRAIN
-    alert("New train added successfully!");
-    
-    //CLEARS ALL THE INPUT FIELDS
-	$("#train-name-input").val("");
-	$("#destination-input").val("");
-	$("#first-train-time-input").val("");
-    $("#frequency").val("");
+		//CLEAR ALL THE INPUT FIELDS
+		$('#train-name-input').val('');
+		$('#destination-input').val('');
+		$('#first-train-time-input').val('');
+		$('#frequency-input').val('');
+
+		//TEMP OBJECT TO HOLD NEW TRAIN DATA
+		var newTrain = {
+			newTrainName: trainName,
+			newDestination: destination,
+			newTrainTime: trainTime,
+			newFrequency: frequency,
+			dateAdded: firebase.database.ServerValue.TIMESTAMP
+		};
+
+		//UPLOAD TRAIN DATA TO DATABASE
+		database.ref().push(newTrain);
+
+		//ALERTING FOR ADDING A NEW TRAIN
+		alert('New train added successfully!');
+	}
 });
 
 //Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
-dataRef.ref().orderByChild("dateAdded").limitToLast(1).on("child_added", function(childSnapshot) {
+database.ref().on('child_added', function(childSnapshot) {
+	// STORE ALL SNAPSHOT VALUES INTO VARIABLES
+	var trainName = childSnapshot.val().newTrainName;
+	var destination = childSnapshot.val().newDestination;
+	var trainTime = childSnapshot.val().newTrainTime;
+	var frequency = parseInt(childSnapshot.val().newFrequency);
 
-    // STORE ALL SNAPSHOT VALUES INTO VARIABLES
-    var trainName = childSnapshot.val().newTrainName;
-    var destination = childSnapshot.val().newDestination;
-    var trainTime = childSnapshot.val().newTrainTime;
-    var frequency = childSnapshot.val().newFrequency;
+	// CALCULATING TIMES WITH MOMENT.JS
+	//CONVERT MILITARY TIME 
+	var firstStartTimeConverted = moment(trainTime, 'HH:mm').subtract(1, 'years');
 
-    console.log(moment());
+	//GETTING THE TIME DIFFERENCE IN MINUTES
+	var timeDiff = moment().diff(moment(firstStartTimeConverted), 'minutes');
 
-    // console.log(moment(trainTime, 'HH:mm').format('hh:mm a'));
+	var timeRemain = timeDiff % frequency;
 
-    console.log(moment("8:00 pm",'HH mm'));
+	var minutesAway = frequency - timeRemain;
 
+	var nextArrival = moment().add(minutesAway, 'minutes');
+	//nextArrival = moment(nextArrival).format("LT");
 
-    // var travelTime = moment().add(11, 'minutes').format('hh:mm A');// it will add 11 mins in the current time and will give time in 03:35 PM format; can use m or minutes 
+	//Create the new row
+	var newRow = $('<tr>').append(
+		$('<td>').text(trainName),
+		$('<td>').text(destination),
+		$('<td>').text(frequency),
+		$('<td>').text(moment(nextArrival).format('LT')),
+		$('<td>').text(minutesAway)
+	);
 
-		    
-//     // Prettify the employee start
-//     var startDateInReadableFormat = moment.unix(empStart).format("MM/DD/YYYY");
-//     //console.log("DATE FORMAT IN HUMAN READABLE: " + startDateInReadableFormat);
-
-//     // Calculate the months worked using hardcore math
-//     // To calculate the months worked
-//     var empMonths = moment().diff(moment(empStart, "X"), "months");
-//     //console.log("TOTAL MONTHS WORKED: " + empMonths);
-
-//     // Calculate the total billed rate
-//     var empBilled = empMonths * empRate;
-//     //console.log("TOTAL BILL: " + empBilled);	
-    
-//     // Create the new row
-//     var newRow = $('<tr>').append(
-// 			$('<td>').text(empName),
-// 			$('<td>').text(empRole),
-// 			$('<td>').text(startDateInReadableFormat),
-//       $('<td>').text(empMonths),
-//       $("<td>").text(empRate),
-//       $("<td>").text(empBilled)      
-// 		);
-
-// 		// Append the new row to the table
-//     $('#employee-table > tbody').append(newRow);
-
+	// Append the new row to the table
+	$('#current-train-table > tbody').append(newRow);
 });
