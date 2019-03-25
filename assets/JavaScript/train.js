@@ -61,31 +61,55 @@ database.ref().on('child_added', function(childSnapshot) {
 	var trainName = childSnapshot.val().newTrainName;
 	var destination = childSnapshot.val().newDestination;
 	var trainTime = childSnapshot.val().newTrainTime;
-	var frequency = parseInt(childSnapshot.val().newFrequency);
+	var frequency = childSnapshot.val().newFrequency;
+	var key = childSnapshot.key;
+	var trash = "<button id =" + key + "><i class='fas fa-trash'></i></button>";
+	// var remove = "<button class='glyphicon glyphicon-trash' id=" + key + "></button>";
 
 	// CALCULATING TIMES WITH MOMENT.JS
-	//CONVERT MILITARY TIME 
-	var firstStartTimeConverted = moment(trainTime, 'HH:mm').subtract(1, 'years');
 
-	//GETTING THE TIME DIFFERENCE IN MINUTES
-	var timeDiff = moment().diff(moment(firstStartTimeConverted), 'minutes');
+	//First Time pushed back 1 year to make sure it comes before current time)
+	var firstTrainTimeConverted = moment(trainTime, 'hh:mm').subtract(1, 'years');
+	console.log('First train time: ' + firstTrainTimeConverted);
 
-	var timeRemain = timeDiff % frequency;
+	// Current Time
+	var currentTime = moment();
 
-	var minutesAway = frequency - timeRemain;
+	// Difference between the times
+	var diffTime = moment().diff(moment(firstTrainTimeConverted), 'minutes');
 
+	// Time apart (remainder)
+	var timeRemainder = diffTime % frequency;
+
+	// Minute(s) Until Train
+	var minutesAway = frequency - timeRemainder;
+
+	// Next Train
 	var nextArrival = moment().add(minutesAway, 'minutes');
-	//nextArrival = moment(nextArrival).format("LT");
+	var nextArrivalTimeFormatted = moment(nextArrival).format('hh:mm A');
+
+	// var trash = <button><i class="fas fa-trash"></i></button>;
 
 	//Create the new row
 	var newRow = $('<tr>').append(
 		$('<td>').text(trainName),
 		$('<td>').text(destination),
 		$('<td>').text(frequency),
-		$('<td>').text(moment(nextArrival).format('LT')),
-		$('<td>').text(minutesAway)
+		$('<td>').text(nextArrivalTimeFormatted),
+		$('<td>').text(minutesAway),
+		$('<td>') + trash
 	);
 
 	// Append the new row to the table
 	$('#current-train-table > tbody').append(newRow);
 });
+
+$(document).on('click', '.fa-trash', deleteTrain);
+
+function deleteTrain() {
+	var deleteKey = $(this).attr("key");
+	console.log($(this).attr("key"));
+	database.ref().child(deleteKey).remove();
+
+	// location.reload();
+}
