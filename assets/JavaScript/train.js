@@ -63,32 +63,28 @@ database.ref().on('child_added', function(childSnapshot) {
 	var trainTime = childSnapshot.val().newTrainTime;
 	var frequency = childSnapshot.val().newFrequency;
 	var key = childSnapshot.key;
-	var trash = "<button id =" + key + "><i class='fas fa-trash'></i></button>";
-	// var remove = "<button class='glyphicon glyphicon-trash' id=" + key + "></button>";
 
 	// CALCULATING TIMES WITH MOMENT.JS
-
-	//First Time pushed back 1 year to make sure it comes before current time)
+	//Assuming First Time started this moment but 1 year ago
 	var firstTrainTimeConverted = moment(trainTime, 'hh:mm').subtract(1, 'years');
-	console.log('First train time: ' + firstTrainTimeConverted);
+	//console.log('First train time: ' + firstTrainTimeConverted);
 
 	// Current Time
 	var currentTime = moment();
 
-	// Difference between the times
+	// Difference between current time and the first time the train started its service in minutes
 	var diffTime = moment().diff(moment(firstTrainTimeConverted), 'minutes');
 
 	// Time apart (remainder)
 	var timeRemainder = diffTime % frequency;
 
-	// Minute(s) Until Train
+	// Minutes till the train comes
 	var minutesAway = frequency - timeRemainder;
 
-	// Next Train
+	// Next Train in minutes
 	var nextArrival = moment().add(minutesAway, 'minutes');
+	// Next Train in AM/PM
 	var nextArrivalTimeFormatted = moment(nextArrival).format('hh:mm A');
-
-	// var trash = <button><i class="fas fa-trash"></i></button>;
 
 	//Create the new row
 	var newRow = $('<tr>').append(
@@ -96,20 +92,9 @@ database.ref().on('child_added', function(childSnapshot) {
 		$('<td>').text(destination),
 		$('<td>').text(frequency),
 		$('<td>').text(nextArrivalTimeFormatted),
-		$('<td>').text(minutesAway),
-		$('<td>') + trash
+		$('<td>').text(minutesAway)
 	);
 
 	// Append the new row to the table
 	$('#current-train-table > tbody').append(newRow);
 });
-
-$(document).on('click', '.fa-trash', deleteTrain);
-
-function deleteTrain() {
-	var deleteKey = $(this).attr("key");
-	console.log($(this).attr("key"));
-	database.ref().child(deleteKey).remove();
-
-	// location.reload();
-}
