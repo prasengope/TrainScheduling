@@ -55,7 +55,7 @@ $('#submit-btn').on('click', function(event) {
 	}
 });
 
-//Firebase watcher + initial loader HINT: This code behaves similarly to .on("value")
+//SAVING DATA TO FIREBASE AND RETRIEVING THEM FOR HTML TABLE ON PAGE
 database.ref().on('child_added', function(childSnapshot) {
 	// STORE ALL SNAPSHOT VALUES INTO VARIABLES
 	var trainName = childSnapshot.val().newTrainName;
